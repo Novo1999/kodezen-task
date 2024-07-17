@@ -1,13 +1,36 @@
-.select {
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: sans-serif;
+}
+
+.kzui-flex__center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.kzui-full__height {
+  min-height: 100vh;
+}
+
+.kzui-bg__blue {
+  background: #60a5fa;
+}
+
+.kzui-select {
   position: relative;
-  display: inline-block;
+  display: flex;
+  gap: 1rem;
   width: 100%;
   max-width: 300px;
   font-family: Arial, sans-serif;
   margin: 0.5rem 0;
 }
 
-.select__input {
+.kzui-select__input {
   width: 100%;
   padding: 0.5rem 1rem;
   font-size: 1rem;
@@ -19,23 +42,23 @@
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-.select__input:focus {
+.kzui-select__input:focus {
   border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
   outline: none;
 }
 
-.select__input:disabled {
+.kzui-select__input:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
 }
 
-.select--disabled .select__input {
+.kzui-select--disabled .select__input {
   background-color: #f5f5f5;
   cursor: not-allowed;
 }
 
-.select__input::after {
+.kzui-select__input::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -49,13 +72,139 @@
   transform: translateY(-50%);
 }
 
-.flex__center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+.kzui-clear__button {
+  font-size: 17px;
+  padding: 0.5em 2em;
+  border: transparent;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  background: dodgerblue;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all;
+  transition-duration: 100ms;
 }
 
-.full__height {
-  min-height: 100vh;
+.kzui-clear__button:hover {
+  background: rgb(2, 0, 36);
+  background: linear-gradient(
+    90deg,
+    rgba(30, 144, 255, 1) 0%,
+    rgba(0, 212, 255, 1) 100%
+  );
+}
+
+.kzui-clear__button:active {
+  transform: translate(0em, 0.2em);
+}
+
+/* multiselect */
+.kzui-multi-select {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px 0;
+  list-style-type: none;
+  margin-top: 20px;
+}
+
+.kzui-multi-select__input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.kzui-multi-select__input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.kzui-multi-select--disabled .kzui-multi-select__input {
+  opacity: 0.6;
+}
+
+.kzui-multi-clear__button {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.kzui-multi-clear__button:hover {
+  background-color: #d32f2f;
+}
+
+.kzui-multi-clear__button:disabled {
+  background-color: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.kzui-multi-select__option {
+  cursor: pointer;
+  margin-bottom: 5px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.kzui-multi-select__control {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.kzui-multi-select__selected {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #333;
+}
+
+.kzui-multi-select__arrow {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #666;
+  transition: transform 0.3s ease;
+}
+
+.kzui-multi-select__arrow.open {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.kzui-multi-select__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 4px;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  margin-top: 5px;
 }
