@@ -1,11 +1,4 @@
-import { ChangeEvent } from 'react'
 import './search.css'
-
-interface SearchProp {
-  value: string
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void
-  disabled: boolean
-}
 
 const Search = ({ value, onChange, disabled }: SearchProp) => {
   return (

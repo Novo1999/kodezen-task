@@ -1,22 +1,14 @@
 import { ChangeEvent, MouseEvent, useMemo, useState } from 'react'
+import {
+  checkSelected,
+  checkSelectedForMultiSelect,
+} from '../../util/check-util'
+import {
+  groupedSelectErrorHandler,
+  multiSelectErrorHandler,
+} from '../../util/error-handler'
 import Search from '../search/search'
 import './select.css'
-
-type GroupedOption = { group: string; options: string[] }[]
-
-type SelectProp = {
-  isClearable?: boolean
-  isSearchable?: boolean
-  isDisabled?: boolean
-  options: string[] | GroupedOption
-  placeholder?: string
-  isGrouped?: boolean
-  isMulti?: boolean
-  onChangeHandler?: (value: string) => void
-  onMenuOpen?: () => void
-  onSearchHandler?: () => void
-  value?: string
-}
 
 const Select = ({ ...prop }: SelectProp) => {
   const {
@@ -76,8 +68,15 @@ const Select = ({ ...prop }: SelectProp) => {
       />
     )
   } else if (isMulti) {
-    return <MultiSelect {...prop} />
+    return (
+      <MultiSelect
+        {...prop}
+        handleSearch={handleSearch}
+        searchTerm={searchTerm}
+      />
+    )
   } else {
+    const hasValue = !!value
     return (
       <>
         {isSearchable && (
@@ -107,7 +106,7 @@ const Select = ({ ...prop }: SelectProp) => {
               )
             })}
           </select>
-          {clearButtonEnabled && !!value && (
+          {clearButtonEnabled && hasValue && (
             <button className='kzui-clear__button' onClick={clearValue}>
               Clear
             </button>
@@ -119,14 +118,6 @@ const Select = ({ ...prop }: SelectProp) => {
 }
 
 export default Select
-
-interface GroupedSelectProp extends SelectProp {
-  value: string
-  handleSelect: (e: ChangeEvent<HTMLSelectElement>) => void
-  clearValue: () => void
-  handleSearch: (e: ChangeEvent<HTMLInputElement>) => void
-  searchTerm: string
-}
 
 const GroupedSelect = ({
   value,
@@ -146,8 +137,9 @@ const GroupedSelect = ({
   } = prop
   const clearButtonEnabled = isClearable && !isDisabled
   // throws an error if isGrouped is true and options are string of array or numbers
-  errorThrowerGroupSelect(isGrouped as boolean, options as string[])
+  groupedSelectErrorHandler(isGrouped as boolean, options as string[])
 
+  // for search
   const filteredOptions = useMemo(() => {
     return (options as GroupedOption).filter((item) => {
       const itemGroupMatchesWithSearchTerm = item.group.includes(
@@ -161,6 +153,14 @@ const GroupedSelect = ({
       return itemOptionsMatchesWithSearchTerm || itemGroupMatchesWithSearchTerm
     })
   }, [searchTerm, options])
+
+  const multiSelectResultCount = useMemo(() => {
+    return `${filteredOptions.length} result${
+      filteredOptions.length > 1 ? 's' : ''
+    }`
+  }, [filteredOptions.length])
+
+  const valueSelected = !!value
 
   return (
     <>
@@ -180,7 +180,8 @@ const GroupedSelect = ({
           disabled={isDisabled}
           onChange={handleSelect}
         >
-          <option>{placeholder ?? 'Select Option'}</option>
+          {!searchTerm && <option>{placeholder ?? 'Select Option'}</option>}
+          {searchTerm && <option value=''>{multiSelectResultCount}</option>}
           {(filteredOptions as GroupedOption).map((item) => {
             return (
               <optgroup key={item.group} label={item.group}>
@@ -195,7 +196,7 @@ const GroupedSelect = ({
             )
           })}
         </select>
-        {clearButtonEnabled && (
+        {clearButtonEnabled && valueSelected && (
           <button className='kzui-clear__button' onClick={clearValue}>
             Clear
           </button>
@@ -205,14 +206,28 @@ const GroupedSelect = ({
   )
 }
 
-const MultiSelect = ({ ...prop }: SelectProp) => {
+interface MultiSelectProp extends SelectProp {
+  handleSearch: (e: ChangeEvent<HTMLInputElement>) => void
+  searchTerm: string
+}
+
+const MultiSelect = ({ ...prop }: MultiSelectProp) => {
   const [values, setValues] = useState<Set<string>>(new Set([]))
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const { isDisabled, options, placeholder, isClearable, isMulti } = prop
+  const {
+    isDisabled,
+    options,
+    placeholder,
+    isClearable,
+    isMulti,
+    isSearchable,
+    searchTerm,
+    handleSearch,
+  } = prop
   const clearButtonEnabled = isClearable && !isDisabled
 
   // for inappropriate data structure throw error
-  errorThrowerMultiSelect(isMulti!, options as string[])
+  multiSelectErrorHandler(isMulti!, options as string[])
 
   const handleSelect = (value: string) => {
     setValues((prevValues) => {
@@ -255,86 +270,72 @@ const MultiSelect = ({ ...prop }: SelectProp) => {
 
   const dropdownOpenStyle = dropdownOpen ? 'open' : ''
 
+  const filteredOptions = useMemo(() => {
+    return options.filter((option) =>
+      (option as string).toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [options, searchTerm])
+
+  const multiSelectResultCount = useMemo(() => {
+    return `${filteredOptions.length} result${
+      filteredOptions.length > 1 ? 's' : ''
+    }`
+  }, [filteredOptions.length])
+
   return (
-    <div className={`kzui-multi-select ${disabledStyle}`}>
-      <div className='kzui-multi-select__control' onClick={toggleDropdown}>
-        <div className='kzui-multi-select__selected'>{placeholderText}</div>
-        <div className={`kzui-multi-select__arrow ${dropdownOpenStyle}`}></div>
-      </div>
-      {dropdownOpen && !isDisabled && (
-        <ul className='kzui-multi-select'>
-          {(options as string[]).map((option) => {
-            const checkIcon = checkSelectedForMultiSelect(option, values)
-            const handleClearValue = (e: MouseEvent<HTMLButtonElement>) => {
-              return clearValue(e, option)
-            }
-
-            return (
-              <li
-                key={option}
-                className={`kzui-multi-select__option ${
-                  values.has(option) ? 'selected' : ''
-                }`}
-                onClick={() => handleSelect(option)}
-              >
-                <p>
-                  {checkIcon} {option}
-                </p>
-                {clearButtonEnabled && values.has(option) && (
-                  <button
-                    className='kzui-clear__button'
-                    onClick={handleClearValue}
-                  >
-                    Clear
-                  </button>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+    <>
+      {isSearchable && (
+        <Search
+          value={searchTerm}
+          onChange={handleSearch}
+          disabled={isDisabled as boolean}
+        />
       )}
-    </div>
+      <div className={`kzui-multi-select ${disabledStyle}`}>
+        <div className='kzui-multi-select__control' onClick={toggleDropdown}>
+          {searchTerm ? (
+            <p>{multiSelectResultCount}</p>
+          ) : (
+            <div className='kzui-multi-select__selected'>{placeholderText}</div>
+          )}
+
+          <div
+            className={`kzui-multi-select__arrow ${dropdownOpenStyle}`}
+          ></div>
+        </div>
+        {dropdownOpen && !isDisabled && (
+          <ul className='kzui-multi-select'>
+            {(filteredOptions as string[]).map((option) => {
+              const checkIcon = checkSelectedForMultiSelect(option, values)
+              const handleClearValue = (e: MouseEvent<HTMLButtonElement>) => {
+                return clearValue(e, option)
+              }
+
+              return (
+                <li
+                  key={option}
+                  className={`kzui-multi-select__option ${
+                    values.has(option) ? 'selected' : ''
+                  }`}
+                  onClick={() => handleSelect(option)}
+                >
+                  <p>
+                    {checkIcon} {option}
+                  </p>
+                  {clearButtonEnabled && values.has(option) && (
+                    <button
+                      className='kzui-clear__button'
+                      onClick={handleClearValue}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+    </>
   )
-}
-
-// Adds a check mark icon beside the option
-const checkSelected = (option: string, value: string) => {
-  if (option.toLowerCase() === value.toLowerCase()) {
-    return '✅'
-  } else {
-    return null
-  }
-}
-
-// for multi select
-const checkSelectedForMultiSelect = (option: string, values: Set<string>) => {
-  if (values.has(option)) {
-    return '✅'
-  } else {
-    return null
-  }
-}
-
-const errorThrowerGroupSelect = (isGrouped: boolean, values: string[]) => {
-  if (
-    isGrouped &&
-    values.every(
-      (value) => typeof value === 'string' || typeof value === 'number'
-    )
-  ) {
-    throw new Error('Cannot use string of array in grouped value component')
-  }
-}
-
-const errorThrowerMultiSelect = (isMulti: boolean, values: string[]) => {
-  if (
-    isMulti &&
-    !values.every(
-      (value) => typeof value === 'string' || typeof value === 'number'
-    )
-  ) {
-    throw new Error(
-      'Cannot use this data structure in multiple value component'
-    )
-  }
 }
