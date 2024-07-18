@@ -66,12 +66,13 @@ const Select = ({ ...prop }: SelectProp) => {
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     if (onSearchHandler) {
       onSearchHandler(e)
-      setSearchTerm((e as ChangeEvent<HTMLInputElement>).target.value)
+      setSearchTerm((e as ChangeEvent<HTMLInputElement>).target.value) // to keep the state in sync
     } else {
       setSearchTerm((e as ChangeEvent<HTMLInputElement>).target.value)
     }
   }
 
+  // get matched result count
   const multiSelectResultCount = useMemo(() => {
     return `${filteredOptions.length} result${
       filteredOptions.length > 1 ? 's' : ''
