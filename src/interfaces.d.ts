@@ -10,4 +10,13 @@ interface GroupedSelectProp extends SelectProp {
   clearValue: () => void
   handleSearch: (e: ChangeEvent<HTMLInputElement>) => void
   searchTerm: string
+  isOpen: boolean
+  handleOpen: () => void
+}
+
+interface MultiSelectProp extends SelectProp {
+  handleSearch: (e: ChangeEvent<HTMLInputElement>) => void
+  searchTerm: string
+  isOpen: boolean
+  handleOpen: () => void
 }

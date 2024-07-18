@@ -10,6 +10,6 @@ type SelectProp = {
   isMulti?: boolean
   onChangeHandler?: (value: string) => void
   onMenuOpen?: () => void
-  onSearchHandler?: () => void
+  onSearchHandler?: (value: ChangeEvent<HTMLInputElement>) => void
   value?: string
 }

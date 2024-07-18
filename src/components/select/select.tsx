@@ -19,13 +19,31 @@ const Select = ({ ...prop }: SelectProp) => {
     isGrouped,
     isMulti,
     isSearchable,
+    onChangeHandler,
     value,
+    onMenuOpen,
+    onSearchHandler,
   } = prop
   const [stateValue, setStateValue] = useState(value ?? '')
   const [searchTerm, setSearchTerm] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
 
-  const handleSelect = (e: ChangeEvent<HTMLSelectElement>) => {
-    setStateValue(e.target.value)
+  const handleOpen = () => {
+    if (onMenuOpen) {
+      onMenuOpen()
+      setIsOpen(true)
+    } else {
+      setIsOpen(true)
+    }
+  }
+
+  const handleSelect = (e: ChangeEvent<HTMLSelectElement> | string) => {
+    // if handler prop passed, use that
+    if (onChangeHandler && typeof e === 'string') {
+      onChangeHandler(e)
+    } else {
+      setStateValue((e as ChangeEvent<HTMLSelectElement>).target.value)
+    }
     setSearchTerm('')
   }
 
@@ -46,7 +64,12 @@ const Select = ({ ...prop }: SelectProp) => {
   }, [options, searchTerm, isGrouped, isMulti])
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
+    if (onSearchHandler) {
+      onSearchHandler(e)
+      setSearchTerm((e as ChangeEvent<HTMLInputElement>).target.value)
+    } else {
+      setSearchTerm((e as ChangeEvent<HTMLInputElement>).target.value)
+    }
   }
 
   const multiSelectResultCount = useMemo(() => {
@@ -65,6 +88,8 @@ const Select = ({ ...prop }: SelectProp) => {
         options={options}
         handleSearch={handleSearch}
         searchTerm={searchTerm}
+        isOpen={isOpen}
+        handleOpen={handleOpen}
       />
     )
   } else if (isMulti) {
@@ -73,13 +98,15 @@ const Select = ({ ...prop }: SelectProp) => {
         {...prop}
         handleSearch={handleSearch}
         searchTerm={searchTerm}
+        isOpen={isOpen}
+        handleOpen={handleOpen}
       />
     )
   } else {
-    const hasValue = !!value
+    const hasValue = !!stateValue
     return (
       <>
-        {isSearchable && (
+        {isSearchable && isOpen && (
           <Search
             value={searchTerm}
             onChange={handleSearch}
@@ -90,13 +117,14 @@ const Select = ({ ...prop }: SelectProp) => {
           className={`kzui-select ${isDisabled ? 'kzui-select--disabled' : ''}`}
         >
           <select
+            onClick={handleOpen}
             className='kzui-select__input'
             value={value}
             disabled={isDisabled}
             onChange={handleSelect}
           >
             {!searchTerm && <option>{placeholder ?? 'Select Option'}</option>}
-            {searchTerm && <option value=''>{multiSelectResultCount}</option>}
+            {searchTerm && <option>{multiSelectResultCount}</option>}
             {(filteredOptions as string[]).map((option) => {
               const checkIcon = checkSelected(option!, stateValue)
               return (
@@ -125,6 +153,8 @@ const GroupedSelect = ({
   clearValue,
   handleSearch,
   searchTerm,
+  isOpen,
+  handleOpen,
   ...prop
 }: GroupedSelectProp) => {
   const {
@@ -164,7 +194,7 @@ const GroupedSelect = ({
 
   return (
     <>
-      {isSearchable && (
+      {isSearchable && isOpen && (
         <Search
           value={searchTerm}
           onChange={handleSearch}
@@ -175,6 +205,7 @@ const GroupedSelect = ({
         className={`kzui-select ${isDisabled ? 'kzui-select--disabled' : ''}`}
       >
         <select
+          onClick={handleOpen}
           className='kzui-select__input'
           value={value}
           disabled={isDisabled}
@@ -198,17 +229,12 @@ const GroupedSelect = ({
         </select>
         {clearButtonEnabled && valueSelected && (
           <button className='kzui-clear__button' onClick={clearValue}>
-            Clear
+            X
           </button>
         )}
       </div>
     </>
   )
-}
-
-interface MultiSelectProp extends SelectProp {
-  handleSearch: (e: ChangeEvent<HTMLInputElement>) => void
-  searchTerm: string
 }
 
 const MultiSelect = ({ ...prop }: MultiSelectProp) => {
@@ -223,6 +249,8 @@ const MultiSelect = ({ ...prop }: MultiSelectProp) => {
     isSearchable,
     searchTerm,
     handleSearch,
+    isOpen,
+    handleOpen,
   } = prop
   const clearButtonEnabled = isClearable && !isDisabled
 
@@ -240,6 +268,7 @@ const MultiSelect = ({ ...prop }: MultiSelectProp) => {
   const toggleDropdown = () => {
     if (!isDisabled) {
       setDropdownOpen(!dropdownOpen)
+      handleOpen()
     }
   }
 
@@ -284,7 +313,7 @@ const MultiSelect = ({ ...prop }: MultiSelectProp) => {
 
   return (
     <>
-      {isSearchable && (
+      {isSearchable && isOpen && (
         <Search
           value={searchTerm}
           onChange={handleSearch}
@@ -327,7 +356,7 @@ const MultiSelect = ({ ...prop }: MultiSelectProp) => {
                       className='kzui-clear__button'
                       onClick={handleClearValue}
                     >
-                      Clear
+                      X
                     </button>
                   )}
                 </li>
